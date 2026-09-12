@@ -121,6 +121,9 @@ const srv = http.createServer((req, res) => {
   }
   if (u === '/api/health') { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify({ ok: true, online: Object.values(state.players).filter(p => p.online).length })); return; }
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   fs.readFile(path.join(ROOT, 'index.html'), (err, data) => {
     if (err) { res.statusCode = 404; res.end('not found'); } else res.end(data);
   });
