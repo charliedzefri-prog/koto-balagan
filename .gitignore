@@ -1,0 +1,4 @@
+node_modules/
+mp_state.json
+chatlog.json
+*.log
