@@ -45,17 +45,28 @@ const ghUrl = () => 'https://api.github.com/repos/' + GH.repo + '/contents/' + G
 function ghHeaders() {
   return { Authorization: 'Bearer ' + GH.token, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' };
 }
+async function ghRefreshSha() {
+  try {
+    const g = await fetch(ghUrl(), { headers: ghHeaders() });
+    if (g.ok) GH.sha = (await g.json()).sha;
+    else if (g.status === 404) GH.sha = null;
+  } catch (e) {}
+}
 async function ghPush() {
   if (!GH.token || !GH.repo) return;
-  try {
-    const content = Buffer.from(JSON.stringify({ players: state.players, chat: state.chat.slice(-100) })).toString('base64');
-    const body = { message: 'state ' + new Date().toISOString(), content };
-    if (GH.sha) body.sha = GH.sha;
-    if (GH.branch) body.branch = GH.branch;
-    const r = await fetch(ghUrl(), { method: 'PUT', headers: ghHeaders(), body: JSON.stringify(body) });
-    if (r.ok) { const d = await r.json(); GH.sha = d.content && d.content.sha; }
-    else if (r.status !== 409) console.log('gh push http ' + r.status);
-  } catch (e) { console.log('gh push error ' + e.message); }
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const content = Buffer.from(JSON.stringify({ players: state.players, chat: state.chat.slice(-100) })).toString('base64');
+      const body = { message: 'state ' + new Date().toISOString(), content };
+      if (GH.sha) body.sha = GH.sha;
+      if (GH.branch) body.branch = GH.branch;
+      const r = await fetch(ghUrl(), { method: 'PUT', headers: ghHeaders(), body: JSON.stringify(body) });
+      if (r.ok) { const d = await r.json(); GH.sha = d.content && d.content.sha; return; }
+      if (r.status === 409 && attempt === 0) { await ghRefreshSha(); continue; }
+      console.log('gh push http ' + r.status);
+      return;
+    } catch (e) { console.log('gh push error ' + e.message); return; }
+  }
 }
 let ghT = null;
 function ghSave() {
@@ -370,7 +381,9 @@ setInterval(() => {
   saveState();
   broadcast({ t: 'chat', m });
 }, 45000);
-setInterval(saveState, 30000);
+setInterval(() => {
+  try { fs.writeFileSync(STATE_FILE, JSON.stringify({ players: state.players, chat: state.chat.slice(-100) })); } catch (e) {}
+}, 30000);
 
 ghLoad();
 process.on('SIGTERM', () => {
