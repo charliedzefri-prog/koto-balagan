@@ -228,6 +228,21 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;}
 #evo-anim{position:fixed;inset:0;background:#fff;z-index:200;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;}
 #evo-anim img{width:210px;image-rendering:pixelated;animation:evoPop .8s ease;}
 @keyframes evoPop{0%{transform:scale(0) rotate(360deg);opacity:0}60%{transform:scale(1.25) rotate(0)}100%{transform:scale(1)}}
+/* ---------- GACHA CUTSCENE (v12.2) ---------- */
+#gacha-cs{position:fixed;inset:0;z-index:250;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#05030a;}
+.cs-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 42%,#3a1060 0%,#120722 55%,#05030a 100%);animation:csBg 3.5s ease-in-out infinite;}
+@keyframes csBg{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.12);opacity:1}}
+.cs-glow{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(255,210,62,.5),rgba(255,210,62,0) 70%);animation:csGlow 2.2s ease-in-out infinite;pointer-events:none;}
+@keyframes csGlow{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.6}50%{transform:translate(-50%,-50%) scale(1.25);opacity:1}}
+#cs-art{position:relative;width:230px;image-rendering:pixelated;filter:drop-shadow(0 0 24px rgba(255,210,62,.65)) drop-shadow(0 10px 20px rgba(0,0,0,.7));animation:csArt 1.1s cubic-bezier(.2,1.4,.4,1);}
+@keyframes csArt{0%{transform:scale(.15) rotate(-8deg);opacity:0}60%{transform:scale(1.15) rotate(2deg);opacity:1}100%{transform:scale(1) rotate(0)}}
+.cs-tag{position:relative;margin-top:14px;background:linear-gradient(90deg,#ff2e63,#ff9f2e);border:2px solid #fff3;color:#fff;font-size:11px;font-weight:900;letter-spacing:3px;padding:4px 14px;border-radius:10px;animation:csBlink 1.5s ease-in-out infinite;}
+@keyframes csBlink{0%,100%{opacity:1}50%{opacity:.55}}
+.cs-name{position:relative;font-family:'Arial Black',Verdana;font-size:30px;color:#fff;margin-top:10px;letter-spacing:2px;text-shadow:0 3px 0 rgba(0,0,0,.6),0 0 24px rgba(255,210,62,.8);}
+.cs-rar{position:relative;font-size:13px;font-weight:900;margin-top:4px;letter-spacing:2px;text-shadow:0 1px 3px rgba(0,0,0,.8);}
+.cs-cta{position:relative;margin-top:26px;background:linear-gradient(180deg,#ffdf7a,#ffa02e);border:3px solid #7a3c00;border-radius:14px;padding:12px 34px;font-weight:900;font-size:15px;color:#5a2a00;box-shadow:0 5px 0 #7a3c00;cursor:pointer;animation:gbPulse 1.4s ease-in-out infinite;font-family:inherit;}
+.cs-cta:active{transform:translateY(3px);box-shadow:0 1px 0 #7a3c00;}
+.cs-star{position:absolute;color:#ffe9a0;animation:gbTwinkle 1.9s ease-in-out infinite;pointer-events:none;}
 #evo-anim h2{color:var(--orange2);font-size:28px;text-shadow:0 3px 0 var(--brown);letter-spacing:2px;font-family:'Arial Black',Verdana;}
 #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--cream);border:3px solid var(--brown);color:var(--brown);font-weight:900;padding:10px 16px;border-radius:14px;opacity:0;pointer-events:none;transition:.25s;z-index:300;font-size:13px;white-space:nowrap;box-shadow:0 4px 0 var(--brown2);}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -256,6 +271,15 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;}
 .cc-rar.r-XR{background:linear-gradient(135deg,#ff2e63,#ff7aa2,#ff2e63);background-size:200% 100%;animation:shimmer 1.6s linear infinite;}
 .cc-rar.r-QX{background:linear-gradient(135deg,#00e5ff,#e040fb,#00e5ff);background-size:200% 100%;animation:shimmer 1.2s linear infinite;}
 .catcard.in-squad{outline:3px solid #ff9d2e;outline-offset:-1px;}
+.sq-head{display:flex;justify-content:center;padding:10px 0 2px;}
+.sq-rar{font-size:8.5px;font-weight:900;color:#fff;padding:2px 8px;border-radius:8px;letter-spacing:.3px;text-transform:uppercase;}
+.sq-rar.r-R{background:#9a9a9a}
+.sq-rar.r-SR{background:#3f8fdd}
+.sq-rar.r-UR{background:#a55bff}
+.sq-rar.r-MR{background:#ff9d2e}
+.sq-rar.r-XR{background:#ff2e63}
+.sq-rar.r-QX{background:#00b8d9}
+.sq-state{font-size:10.5px;font-weight:900;color:#7a4a10;padding:6px 4px;line-height:1.3;}
 .catcard.in-squad::after{content:'▶ В ОТРЯДЕ';position:absolute;top:4px;right:4px;background:#ff9d2e;color:#3a2000;font-size:8px;font-weight:900;padding:2px 5px;border-radius:8px;border:2px solid #7a4000;transform:rotate(8deg);z-index:4;}
 .squad-hint{font-size:11px;color:#a08050;text-align:center;margin:4px 12px 10px;font-weight:800;}
 .squad-info{background:#fff3d0;border:3px solid #d9b97e;border-radius:12px;padding:8px 12px;margin:8px 12px;font-size:13px;font-weight:900;color:#7a4a10;text-align:center;box-shadow:0 3px 0 #c9a05e;}
@@ -676,6 +700,20 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;}
   <h2>ЭВОЛЮЦИЯ!</h2>
   <img id="evo-img" alt="">
 </div>
+<div id="gacha-cs" class="hidden">
+  <div class="cs-bg" id="cs-bg"></div>
+  <span class="cs-star" style="left:18%;top:22%">✦</span>
+  <span class="cs-star" style="left:78%;top:18%;animation-delay:.4s">✦</span>
+  <span class="cs-star" style="left:12%;top:64%;animation-delay:.8s">✦</span>
+  <span class="cs-star" style="left:84%;top:70%;animation-delay:1.2s">✦</span>
+  <span class="cs-star" style="left:50%;top:10%;animation-delay:.6s;font-size:12px">✦</span>
+  <div class="cs-glow" id="cs-glow"></div>
+  <img id="cs-art" alt="">
+  <div class="cs-tag" id="cs-tag"></div>
+  <div class="cs-name" id="cs-name"></div>
+  <div class="cs-rar" id="cs-rar"></div>
+  <button class="cs-cta" id="cs-cta">ПРОДОЛЖИТЬ</button>
+</div>
 <div id="toast"></div>
 <button id="chat-toggle" title="Серверный чат">💬<span id="chat-dot" class="hidden">●</span></button>
 <div id="chat-box" class="hidden">
@@ -928,7 +966,7 @@ const BP={max:10,xpPer:100,premCost:500,
  prem:[{t:'c',v:500},{t:'f',v:6},{t:'g',v:15},{t:'c',v:800},{t:'g',v:30},{t:'f',v:10},{t:'c',v:1200},{t:'g',v:40},{t:'c',v:1500},{t:'cat',v:1}]};
 
 // ================= SAVE =================
-const DEF={coins:300,gems:60,cats:{},stages:{},stars:{},food:20,foodTs:0,daily:0,starter:false,firstPack:{},sound:true,kills:0,battles:0,wins:0,selCat:null,gacha:0,squad:[],pityUr:0,pityMr:0,bpass:{xp:0,prem:false,claimed:{}},upg:{home:0,team:0,loot:0,kitchen:0},arena:{rating:100,wins:0,losses:0}};
+const DEF={coins:300,gems:60,cats:{},stages:{},stars:{},food:20,foodTs:0,daily:0,starter:false,firstPack:{},sound:true,kills:0,battles:0,wins:0,selCat:null,gacha:0,squad:[],pityUr:0,pityMr:0,bpass:{xp:0,prem:false,claimed:{}},upg:{home:0,team:0,loot:0,kitchen:0,cookery:0},arena:{rating:100,wins:0,losses:0}};
 let S=loadSave();
 function seedFree(d){ CATS.forEach(c=>{ if(c.unlock.type==='free'&&!d.cats[c.key]) d.cats[c.key]={owned:true,lvl:1,xp:0,form:0}; }); }
 function save(){ try{ localStorage.setItem('kotobala_v2',JSON.stringify(S)); }catch(e){} }
@@ -942,6 +980,7 @@ function loadSave(){
   if(typeof d.pityMr!=='number') d.pityMr=0;
   if(!d.bpass) d.bpass={xp:0,prem:false,claimed:{}};
   if(!d.upg) d.upg={home:0,team:0,loot:0,kitchen:0};
+  d.upg.cookery=d.upg.cookery||0;
   if(!d.arena) d.arena={rating:100,wins:0,losses:0};
   if(typeof d.food!=='number') d.food=FOOD_MAX;
   if(!d.foodTs) d.foodTs=now();
@@ -1059,13 +1098,13 @@ function renderSquad(){
     if(!r.owned){
       const el=document.createElement('div');
       el.className='catcard locked';
-      el.innerHTML='<span class="cc-rar r-'+c.rarity+'">'+RARITY[c.rarity].label+'</span><div class="cc-name">'+c.name+'</div><div style="font-size:10px;color:#a08050;font-weight:800;padding:10px 0">🔒 только суммон</div>';
+      el.innerHTML='<div class="sq-head"><span class="sq-rar r-'+c.rarity+'">'+RARITY[c.rarity].label+'</span></div><div class="cc-name">'+c.name+'</div><div class="sq-state" style="color:#a08050">🔒 только суммон</div>';
       grid.appendChild(el); return;
     }
     const inS=squad.includes(c.key);
     const el=document.createElement('div');
     el.className='catcard'+(inS?' in-squad':'');
-    el.innerHTML='<span class="cc-rar r-'+c.rarity+'">'+RARITY[c.rarity].label+'</span><div class="cc-name">'+c.name+'</div><div style="font-size:11px;font-weight:900;color:#7a4a10;padding:6px 0">'+(inS?'✔ В ОТРЯДЕ — тапни, чтобы убрать':'⬆ В ОТРЯД (тап)')+'</div>';
+    el.innerHTML='<div class="sq-head"><span class="sq-rar r-'+c.rarity+'">'+RARITY[c.rarity].label+'</span></div><div class="cc-name">'+c.name+'</div><div class="sq-state">'+(inS?'✔ В ОТРЯДЕ — тапни, чтобы убрать':'⬆ В ОТРЯД (тап)')+'</div>';
     el.addEventListener('click',()=>{ toggleSquad(c.key); });
     grid.appendChild(el);
   });
@@ -1169,7 +1208,7 @@ function mapHtml(list,h){
 }
 function renderStages(){
   topbar();
-  $('#stages-map').innerHTML=mapHtml(STAGES.filter(s=>!s.series2&&!s.event),620);
+  $('#stages-map').innerHTML=mapHtml(STAGES.filter(s=>!s.series2&&!s.series3&&!s.event),620);
   const m2=$('#stages-map2');
   if(m2){
     const s2=STAGES.filter(s=>s.series2);
@@ -1232,8 +1271,10 @@ const UPG={
  home:{icon:'🏠',name:'Логово',desc:'+15% HP базы за уровень',max:10,base:200},
  team:{icon:'💪',name:'Команда',desc:'+3% к статам всех котов',max:10,base:300},
  loot:{icon:'💰',name:'Лут',desc:'+5% монет за рейды',max:10,base:250},
- kitchen:{icon:'🍗',name:'Кухня',desc:'+1 к максимальному корму',max:5,base:400}
+ kitchen:{icon:'🍗',name:'Кухня',desc:'+1 к максимальному корму',max:5,base:400},
+ cookery:{icon:'🍖',name:'Котлетница',desc:'+10% к максимуму и регену котлет 🍖 в бою',max:10,base:300}
 };
+function meatMult(){ return 1+0.10*((S.upg&&S.upg.cookery)||0); }
 function upgCost(t){ return UPG[t].base*((S.upg[t]||0)+1); }
 function buyUpg(t){
   const u=S.upg[t]||0;
@@ -1295,7 +1336,7 @@ function startPvp(i){
   if(!roster.length){ toast('Сначала поймай котов!'); return; }
   Object.assign(B,{
     active:true,stage:{id:90,name:'АРЕНА',bossName:bot.name,foodCost:0,reward:{coins:0,gems:0},spawnTime:1e9,bossAt:1e9,interval:99999,emMul:1,diff:5,sky:['#2a1a4e','#8a5ae0']},
-    t:0,food:150,foodMax:150,units:[],parts:[],pops:[],
+    t:0,food:Math.round(150*meatMult()),foodMax:Math.round(150*meatMult()),units:[],parts:[],pops:[],
     enemyBase:1500,eBaseMax:1500,playerBase:1500,pBaseMax:1500,
     nextSpawn:0,bossSpawned:true,bossPhase:0,bossNext:0,bombCd:0,speed:1,paused:false,over:false,kills:0,
     shake:0,flash:0,sel:roster[0],banner:{txt:'🎮 АРЕНА: ты vs '+bot.name},bannerLife:2500,
@@ -1434,13 +1475,38 @@ function doGacha(n,price,mega){
     wrap.appendChild(el);
     setTimeout(()=>{ el.classList.add('flip'); SFX.coin(); }, 500+i*(n===10?280:0));
   });
+  renderGacha(); // обновить пити/пул сразу после крутки
   const flavor = newCount===0 ? pick(['Удача — миф 😈','Кредиты — тоже деньги','Хоть что-то...']) :
                    newCount>=(n===10?4:1) ? pick(['ВЕРХОВНОЕ ВЕЗЕНИЕ!','Красота!','Такой гача не бывает!']) :
                    pick(['Неплохо!','Есть прогресс','Ладно, живёшь!']);
   $('#gacha-flavor').textContent=flavor;
   $('#gacha-title').textContent=mega?'👑 МЕГА-РЕЗУЛЬТАТ':'✨ РЕЗУЛЬТАТ СУММОНА';
   $('#gacha-summary').innerHTML='новых: <b>'+newCount+'</b> • дублей: <b>'+(n-newCount)+'</b>'+(dupCoins?' • +🪙 '+fmt(dupCoins):'');
-  openModal('modal-gacha');
+  // катсцена, если выпал новый очень редкий кот (MR/XR/QX)
+  const feat=res.filter(r=>r.isNew&&TIER[r.c.rarity]>=3).sort((a,b)=>TIER[b.c.rarity]-TIER[a.c.rarity])[0];
+  if(feat){ gachaCutscene(feat.c,()=>openModal('modal-gacha')); }
+  else openModal('modal-gacha');
+}
+
+// ================= GACHA CUTSCENE (rare new cats) =================
+let csT=null;
+function gachaCutscene(c, cb){
+  const rar=RARITY[c.rarity];
+  const cs=$('#gacha-cs');
+  $('#cs-art').src=SPR[c.key+'_0'];
+  $('#cs-art').style.filter='drop-shadow(0 0 26px '+rar.color+'cc) drop-shadow(0 10px 20px rgba(0,0,0,.7))';
+  $('#cs-glow').style.background='radial-gradient(circle,'+rar.color+'66,'+rar.color+'00 70%)';
+  $('#cs-tag').textContent=c.rarity==='QX'?'НОВЫЙ КВАНТОВЫЙ КОТ':c.rarity==='XR'?'НОВЫЙ ЗАПРЕДЕЛЬНЫЙ КОТ':'НОВЫЙ МИФИЧЕСКИЙ КОТ';
+  $('#cs-name').textContent=c.name.toUpperCase();
+  $('#cs-rar').style.color=rar.color;
+  $('#cs-rar').textContent=c.rarity+' • '+rar.label.toUpperCase()+' • '+c.desc;
+  $('#cs-cta').textContent='ЗАБРАТЬ';
+  cs.classList.remove('hidden');
+  [660,880,1100,1320,1760].forEach((f,i)=>setTimeout(()=>beep(f,0.16,'triangle',0.07),i*110));
+  let closed=false;
+  const done=()=>{ if(closed) return; closed=true; clearTimeout(csT); $('#cs-cta').onclick=null; cs.classList.add('hidden'); cb&&cb(); };
+  $('#cs-cta').onclick=done;
+  csT=setTimeout(done,5200);
 }
 
 // ================= SHOP =================
@@ -1565,7 +1631,7 @@ function startBattle(id){
   const sel0=(S.selCat&&roster0.includes(S.selCat))?S.selCat:roster0[0];
   const pbMax=Math.round((500+150*st.id)*(1+0.15*((S.upg&&S.upg.home)||0)));
   Object.assign(B,{
-    active:true,stage:st,t:0,food:100,foodMax:150,units:[],parts:[],pops:[],
+    active:true,stage:st,t:0,food:Math.round(100*meatMult()),foodMax:Math.round(150*meatMult()),units:[],parts:[],pops:[],
     enemyBase:st.base,eBaseMax:st.base,playerBase:pbMax,pBaseMax:pbMax,
     nextSpawn:1600,bossSpawned:false,bossPhase:0,bossNext:0,bossLabel:st.bossName,bombCd:0,speed:1,paused:false,over:false,kills:0,
     shake:0,flash:0,sel:sel0,banner:{txt:st.name},bannerLife:2200
@@ -1669,8 +1735,8 @@ function attackBase(u){
 }
 function update(dt){
   B.t+=dt;
-  B.food=Math.min(B.foodMax,B.food+dt*0.002);
-  if(B.live) B.eFood=Math.min(150,B.eFood+dt*0.002);
+  B.food=Math.min(B.foodMax,B.food+dt*0.002*meatMult());
+  if(B.live) B.eFood=Math.min(Math.round(150*meatMult()),B.eFood+dt*0.002*meatMult());
   if(B.bombCd>0) B.bombCd=Math.max(0,B.bombCd-dt);
   const st=B.stage;
   if(B.pvp){
@@ -1749,7 +1815,7 @@ function useBomb(){
 }
 function endBattle(won){
   if(B.over) return;
-  B.over=true;
+  B.over=true; B.overTs=Date.now();
   S.battles++; if(won) S.wins++;
   if(B.pvp){
     if(B.live&&LP.role==='host'){ NET.send({t:'pvp_end',room:LP.room,won:!!won}); clearInterval(LP.sendT); LP.room=null; LP.role=null; }
@@ -1863,9 +1929,11 @@ function drawBase(side){
   ctx.fillStyle=hp>0.5?'#5dff6e':hp>0.25?'#ffd23e':'#ff5d5d';
   ctx.fillRect(bx,by,bw*clamp(hp,0,1),9);
 }
+let drawErrs=0;
 function draw(){
   if(!B.active) return;
   const st=B.stage;
+  try{
   ctx.save();
   if(B.shake>0.3){ ctx.translate(rnd(-B.shake,B.shake),rnd(-B.shake,B.shake)); B.shake*=0.88; } else B.shake=0;
   // sky
@@ -1964,11 +2032,26 @@ function draw(){
   $('#pb-num').textContent=fmt(Math.max(0,B.playerBase));
   $('#eb-num').textContent=fmt(Math.max(0,B.enemyBase));
   $('#bomb-cd').style.height=(B.bombCd/22000*100)+'%';
+  } catch(e){
+    drawErrs++;
+    try{
+      ctx.setTransform(1,0,0,1,0,0);
+      ctx.restore();
+      ctx.fillStyle='#fff'; ctx.fillRect(0,0,900,430);
+      ctx.fillStyle='#b02020'; ctx.font='bold 22px Arial'; ctx.textAlign='center';
+      ctx.fillText('⚠ Рендер боя сломался',450,200);
+      ctx.font='bold 14px Arial'; ctx.fillText('Нажми ⏸ и выйди, затем зайди в бой снова',450,232);
+      ctx.fillStyle='#555'; ctx.font='11px Arial'; ctx.fillText(String(e.message||e).slice(0,90),450,410);
+    }catch(e2){}
+    if(drawErrs>30){ drawErrs=0; B.active=false; if(!$('#screen-battle').classList.contains('hidden')){ show('stages'); renderStages(); } }
+  }
 }
 function frame(ts){
   requestAnimationFrame(frame);
   const dt=Math.min(50,ts-lastFrame); lastFrame=ts;
-  if(B.active&&!B.paused&&!B.over&&!B.viewOnly) update(dt*B.speed);
+  try{
+    if(B.active&&!B.paused&&!B.over&&!B.viewOnly) update(dt*B.speed);
+  }catch(e){ console.error('update error', e); }
   if(!$('#screen-battle').classList.contains('hidden')) draw();
 }
 
@@ -2078,6 +2161,7 @@ const NET={
   dispatch(d){
     switch(d.t){
       case 'joined':
+        try{ if(!$('#screen-battle').classList.contains('hidden')&&!B.active){ show('stages'); if(typeof renderStages==='function') renderStages(); } }catch(e){}
         this.players={};
         (d.players||[]).forEach(p=>{ this.players[p.pid]=Object.assign({online:true},p); });
         this.friends=d.friends||[];
@@ -2175,7 +2259,7 @@ function startLiveHost(eroster){
   Object.assign(B,{
     active:true,viewOnly:false,
     stage:{id:90,name:'АРЕНА: ЖИВОЙ БОЙ',bossName:LP.opp?LP.opp.name:'',foodCost:0,reward:{coins:0,gems:0},spawnTime:1e9,bossAt:1e9,interval:99999,emMul:1,diff:5,sky:['#2a1a4e','#8a5ae0']},
-    t:0,food:150,foodMax:150,units:[],parts:[],pops:[],
+    t:0,food:Math.round(150*meatMult()),foodMax:Math.round(150*meatMult()),units:[],parts:[],pops:[],
     enemyBase:1500,eBaseMax:1500,playerBase:1500,pBaseMax:1500,
     nextSpawn:0,bossSpawned:true,bossPhase:0,bossNext:0,bombCd:0,speed:1,paused:false,over:false,kills:0,
     shake:0,flash:0,sel:roster[0],banner:{txt:'🎮 ЖИВОЙ БОЙ: ты vs '+(LP.opp?LP.opp.name:'?')},bannerLife:2500,
@@ -2183,7 +2267,7 @@ function startLiveHost(eroster){
     pvpERoster:eroster,pvpEIdx:0,pvpENext:1500,
     live:true,liveRoom:LP.room||''
   });
-  B.eFood=150;
+  B.eFood=Math.round(150*meatMult());
   show('battle'); buildCatBar(); updateSelCat(); topbar();
   $('#pause-overlay').classList.add('hidden');
   $('#btn-speed').textContent='x1';
@@ -2209,7 +2293,7 @@ function startLiveView(bannerTxt){
   Object.assign(B,{
     active:true,viewOnly:true,
     stage:{id:90,name:'АРЕНА: ЖИВОЙ БОЙ',bossName:LP.opp?LP.opp.name:'',foodCost:0,reward:{coins:0,gems:0},spawnTime:1e9,bossAt:1e9,interval:99999,emMul:1,diff:5,sky:['#2a1a4e','#8a5ae0']},
-    t:0,food:150,foodMax:150,units:[],parts:[],pops:[],
+    t:0,food:Math.round(150*meatMult()),foodMax:Math.round(150*meatMult()),units:[],parts:[],pops:[],
     enemyBase:1500,eBaseMax:1500,playerBase:1500,pBaseMax:1500,
     bombCd:0,bossPhase:0,bossNext:0,speed:1,paused:false,over:false,kills:0,
     shake:0,flash:0,sel:(battleRoster()[0]||''),banner:{txt:bannerTxt},bannerLife:3000,
@@ -2253,7 +2337,7 @@ function endLiveGuest(won,scored){
   if(LP.done) return; LP.done=true;
   clearInterval(LP.sendT); clearTimeout(LP.snapT); clearTimeout(LP.startT);
   const oname=LP.opp?LP.opp.name:'';
-  B.over=true; B.viewOnly=false; B.active=false;
+  B.over=true; B.overTs=Date.now(); B.viewOnly=false; B.active=false;
   B.banner={txt:won?'🏆 ПОБЕДА!':'💀 ПОРАЖЕНИЕ'}; B.bannerLife=2500;
   let pc=0,pg=0,bpxp=0;
   if(scored){
@@ -2549,6 +2633,10 @@ setInterval(()=>{
   }
   if(!$('#screen-stages').classList.contains('hidden')){
     $('#map-food').textContent=S.food+'/'+foodMax()+(S.food<foodMax()?' (+'+Math.ceil(foodTimer()/1000)+'с)':'');
+  }
+  // watchdog: battle screen with no active battle = broken state -> back to raids
+  if(!$('#screen-battle').classList.contains('hidden')&&!B.active&&B.over&&B.overTs&&(Date.now()-B.overTs>2500)&&$('#result-overlay').classList.contains('hidden')){
+    show('stages'); renderStages();
   }
 },1000);
 
