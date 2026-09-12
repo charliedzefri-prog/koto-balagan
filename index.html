@@ -229,7 +229,9 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;}
 #evo-anim img{width:210px;image-rendering:pixelated;animation:evoPop .8s ease;}
 @keyframes evoPop{0%{transform:scale(0) rotate(360deg);opacity:0}60%{transform:scale(1.25) rotate(0)}100%{transform:scale(1)}}
 /* ---------- GACHA CUTSCENE (v12.2) ---------- */
-#gacha-cs{position:fixed;inset:0;z-index:250;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#05030a;}
+#gacha-cs{position:fixed;inset:0;z-index:250;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#05030a;animation:csIn .4s ease;}
+@keyframes csIn{from{opacity:0}to{opacity:1}}animation:csIn .4s ease;}
+@keyframes csIn{from{opacity:0}to{opacity:1}}
 .cs-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 42%,#3a1060 0%,#120722 55%,#05030a 100%);animation:csBg 3.5s ease-in-out infinite;}
 @keyframes csBg{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.12);opacity:1}}
 .cs-glow{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(255,210,62,.5),rgba(255,210,62,0) 70%);animation:csGlow 2.2s ease-in-out infinite;pointer-events:none;}
@@ -1436,6 +1438,21 @@ function renderGacha(){
   $('#mega-10').disabled=serOwned||S.gems<GACHA.mten;
   $('#mega-banner').style.opacity=serOwned?'.55':'1';
 }
+// раскрытие карточек — только когда модалка уже видна, иначе переворот пройдёт невидимым
+function revealGachaCards(res,n){
+  const wrap=$('#gacha-cards'); wrap.innerHTML=''; wrap.classList.toggle('g10',n===10);
+  res.forEach((r,i)=>{
+    const rar=RARITY[r.c.rarity];
+    const el=document.createElement('div'); el.className='gcard';
+    el.innerHTML='<div class="gface gback">❓</div>'+
+      '<div class="gface gfront" style="border-color:'+rar.color+'">'+
+      '<img src="'+SPR[r.key+'_0']+'"><div class="gname" style="color:'+rar.color+'">'+r.c.name+' • '+r.c.rarity+'</div>'+
+      (r.isNew?'<div class="gnew">НОВЫЙ!</div>':'<div class="gnew" style="background:#8a6a40">ДУБЛЬ +🪙 '+rar.dup+'</div>')+
+      '</div>';
+    wrap.appendChild(el);
+    setTimeout(()=>{ el.classList.add('flip'); SFX.coin(); }, 500+i*(n===10?280:0));
+  });
+}
 function doGacha(n,price,mega){
   if(S.gems<price){ toast('Не хватает 💎 — загляни в магазин!'); return; }
   if(mega&&ownCat('seraphim')){ toast('Серафим уже с тобой!'); return; }
@@ -1463,18 +1480,6 @@ function doGacha(n,price,mega){
   });
   if(dupCoins) S.coins+=dupCoins;
   save(); topbar();
-  const wrap=$('#gacha-cards'); wrap.innerHTML=''; wrap.classList.toggle('g10',n===10);
-  res.forEach((r,i)=>{
-    const rar=RARITY[r.c.rarity];
-    const el=document.createElement('div'); el.className='gcard';
-    el.innerHTML='<div class="gface gback">❓</div>'+
-      '<div class="gface gfront" style="border-color:'+rar.color+'">'+
-      '<img src="'+SPR[r.key+'_0']+'"><div class="gname" style="color:'+rar.color+'">'+r.c.name+' • '+r.c.rarity+'</div>'+
-      (r.isNew?'<div class="gnew">НОВЫЙ!</div>':'<div class="gnew" style="background:#8a6a40">ДУБЛЬ +🪙 '+rar.dup+'</div>')+
-      '</div>';
-    wrap.appendChild(el);
-    setTimeout(()=>{ el.classList.add('flip'); SFX.coin(); }, 500+i*(n===10?280:0));
-  });
   renderGacha(); // обновить пити/пул сразу после крутки
   const flavor = newCount===0 ? pick(['Удача — миф 😈','Кредиты — тоже деньги','Хоть что-то...']) :
                    newCount>=(n===10?4:1) ? pick(['ВЕРХОВНОЕ ВЕЗЕНИЕ!','Красота!','Такой гача не бывает!']) :
@@ -1484,8 +1489,9 @@ function doGacha(n,price,mega){
   $('#gacha-summary').innerHTML='новых: <b>'+newCount+'</b> • дублей: <b>'+(n-newCount)+'</b>'+(dupCoins?' • +🪙 '+fmt(dupCoins):'');
   // катсцена, если выпал новый очень редкий кот (MR/XR/QX)
   const feat=res.filter(r=>r.isNew&&TIER[r.c.rarity]>=3).sort((a,b)=>TIER[b.c.rarity]-TIER[a.c.rarity])[0];
-  if(feat){ gachaCutscene(feat.c,()=>openModal('modal-gacha')); }
-  else openModal('modal-gacha');
+  const showResults=()=>{ openModal('modal-gacha'); revealGachaCards(res,n); };
+  if(feat){ gachaCutscene(feat.c,showResults); }
+  else showResults();
 }
 
 // ================= GACHA CUTSCENE (rare new cats) =================
