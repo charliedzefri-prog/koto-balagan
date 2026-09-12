@@ -29,7 +29,54 @@ function saveState() {
   clearTimeout(saveT);
   saveT = setTimeout(() => {
     try { fs.writeFileSync(STATE_FILE, JSON.stringify({ players: state.players, chat: state.chat.slice(-100) })); } catch (e) {}
+    ghSave();
   }, 400);
+}
+
+// ---------- persistent state: GitHub repo (survives redeploys, ephemeral disk) ----------
+const GH = {
+  token: process.env.STATE_GH_TOKEN || '',
+  repo: process.env.STATE_GH_REPO || '', // owner/name
+  file: process.env.STATE_GH_FILE || 'state.json',
+  branch: process.env.STATE_GH_BRANCH || '', // branch to store state (isolated from deploys)
+  sha: null
+};
+const ghUrl = () => 'https://api.github.com/repos/' + GH.repo + '/contents/' + GH.file + (GH.branch ? '?ref=' + GH.branch : '');
+function ghHeaders() {
+  return { Authorization: 'Bearer ' + GH.token, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' };
+}
+async function ghPush() {
+  if (!GH.token || !GH.repo) return;
+  try {
+    const content = Buffer.from(JSON.stringify({ players: state.players, chat: state.chat.slice(-100) })).toString('base64');
+    const body = { message: 'state ' + new Date().toISOString(), content };
+    if (GH.sha) body.sha = GH.sha;
+    if (GH.branch) body.branch = GH.branch;
+    const r = await fetch(ghUrl(), { method: 'PUT', headers: ghHeaders(), body: JSON.stringify(body) });
+    if (r.ok) { const d = await r.json(); GH.sha = d.content && d.content.sha; }
+    else if (r.status !== 409) console.log('gh push http ' + r.status);
+  } catch (e) { console.log('gh push error ' + e.message); }
+}
+let ghT = null;
+function ghSave() {
+  if (!GH.token || !GH.repo) return;
+  clearTimeout(ghT);
+  ghT = setTimeout(ghPush, 15000);
+}
+async function ghLoad() {
+  if (!GH.token || !GH.repo) return;
+  try {
+    const r = await fetch(ghUrl(), { headers: ghHeaders() });
+    if (r.status === 404) { console.log('gh state: none yet, starting fresh'); return; }
+    if (!r.ok) { console.log('gh state load http ' + r.status); return; }
+    const d = await r.json();
+    GH.sha = d.sha;
+    const old = JSON.parse(Buffer.from(d.content, 'base64').toString('utf8'));
+    if (old && typeof old.players === 'object') state.players = old.players;
+    if (old && Array.isArray(old.chat)) state.chat = old.chat.slice(-200);
+    Object.values(state.players).forEach(p => { p.online = false; });
+    console.log('gh state loaded: ' + Object.keys(state.players).length + ' players, ' + state.chat.length + ' msgs');
+  } catch (e) { console.log('gh state load error ' + e.message); }
 }
 
 // ---------- http ----------
@@ -97,7 +144,7 @@ function tryMatch() {
     return;
   }
   const room = 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
-  rooms[room] = { a, b, hostPid: a.player.pid };
+  rooms[room] = { a, b, aPid: a.player.pid, bPid: b.player.pid, hostPid: a.player.pid };
   to(a, { t: 'pvp_found', room, host: a.player.pid, opp: pbrief(b.player) });
   to(b, { t: 'pvp_found', room, host: a.player.pid, opp: pbrief(a.player) });
 }
@@ -113,9 +160,11 @@ wss.on('connection', ws => {
     for (const r of Object.keys(rooms)) {
       const rm = rooms[r];
       if (rm.a === ws || rm.b === ws) {
-        const other = rm.a === ws ? rm.b : rm.a;
-        to(other, { t: 'pvp_cancel', room: r });
-        delete rooms[r];
+        const isA = rm.a === ws;
+        rm[isA ? 'a' : 'b'] = null;
+        const other = isA ? rm.b : rm.a;
+        if (other) to(other, { t: 'pvp_cancel', room: r });
+        setTimeout(() => { const c = rooms[r]; if (c && !c.a && !c.b) delete rooms[r]; }, 120000);
       }
     }
     const qi = queue.indexOf(ws);
@@ -148,6 +197,17 @@ wss.on('connection', ws => {
         p.online = true;
         state.players[pid] = p;
         ws.player = p;
+        for (const r of Object.keys(rooms)) {
+          const rm = rooms[r];
+          const slot = (rm.aPid === p.pid && !rm.a && rm.b) ? 'a' : (rm.bPid === p.pid && !rm.b && rm.a) ? 'b' : null;
+          if (!slot) continue;
+          rm[slot] = ws;
+          const otherPid = slot === 'a' ? rm.bPid : rm.aPid;
+          const otherP = state.players[otherPid] || { pid: otherPid, name: '?', avatar: '🐱', rating: 0 };
+          const other = slot === 'a' ? rm.b : rm.a;
+          to(ws, { t: 'pvp_found', room: r, host: rm.hostPid, opp: pbrief(otherP) });
+          if (other) to(other, { t: 'pvp_found', room: r, host: rm.hostPid, opp: pbrief(p) });
+        }
         const others = Object.values(state.players).filter(x => x !== p).map(pbrief);
         to(ws, { t: 'joined', pid, players: others, friends: friendsBrief(p), requests: friendsBrief(p), chat: state.chat.slice(-40) });
         if (first) {
@@ -244,7 +304,7 @@ wss.on('connection', ws => {
         const tp = state.players[tgt];
         const room = String(d.room || 'r' + Date.now().toString(36));
         if (!tp || !tp.online) { to(ws, { t: 'invite_result', ok: false, msg: 'соперник не в сети' }); break; }
-        rooms[room] = { a: ws, b: null, hostPid: ws.player.pid, invite: tgt };
+        rooms[room] = { a: ws, b: null, aPid: ws.player.pid, bPid: null, hostPid: ws.player.pid, invite: tgt };
         const tw = findWs(tgt);
         if (tw) to(tw, { t: 'pvp_invited', room, from: pbrief(ws.player) });
         to(ws, { t: 'invite_result', ok: true });
@@ -257,6 +317,7 @@ wss.on('connection', ws => {
         const rm = rooms[room];
         if (!rm || rm.b !== null) break;
         rm.b = ws;
+        rm.bPid = ws.player.pid;
         delete rm.invite;
         const hostP = state.players[rm.hostPid];
         to(rm.a, { t: 'pvp_found', room, host: rm.hostPid, opp: pbrief(ws.player) });
@@ -311,4 +372,18 @@ setInterval(() => {
 }, 45000);
 setInterval(saveState, 30000);
 
+ghLoad();
+process.on('SIGTERM', () => {
+  try {
+    clearTimeout(ghT);
+    const content = Buffer.from(JSON.stringify({ players: state.players, chat: state.chat.slice(-100) })).toString('base64');
+    const body = { message: 'state (shutdown) ' + new Date().toISOString(), content };
+    if (GH.sha) body.sha = GH.sha;
+    if (GH.branch) body.branch = GH.branch;
+    const t = setTimeout(() => process.exit(0), 3000);
+    if (GH.token && GH.repo) {
+      fetch(ghUrl(), { method: 'PUT', headers: ghHeaders(), body: JSON.stringify(body) }).catch(() => {}).finally(() => { clearTimeout(t); process.exit(0); });
+    } else process.exit(0);
+  } catch (e) { process.exit(0); }
+});
 srv.listen(PORT, '0.0.0.0', () => console.log('Кото-Балаган MP server on :' + PORT));

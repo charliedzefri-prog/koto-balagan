@@ -857,7 +857,7 @@ const CATS=[
  {key:'grey',   name:'Грей',          file:['Грей.png','Грей Гринч.png','Грей Дон.png'], cost:60, hp:135, atk:52, range:150, rate:850, speed:44, unlock:{type:'gacha'}, rarity:'SR', specials:['','aoe','multi2'],             desc:'Фиолетовый дрозд с длинным клювом. Гринч горит, Дон уже с рожками.'},
  {key:'flain',  name:'Флейн',         file:['Флейн.png','Флейн итальянец.png','Флейн Альт.png'], cost:85, hp:210, atk:85, range:65, rate:900, speed:75, unlock:{type:'gacha'}, rarity:'UR', specials:['','aoe','multi2'],            desc:'Баран с огненной шевелюрой. Итальянец махает, Альт — просто Альт.'},
  {key:'oysmart',name:'Ойсмарт',       file:['Ойсмарт.png','Ойсмарт мафиози.png','Ойсмарт зек.png'], cost:60, hp:130, atk:50, range:160, rate:800, speed:46, unlock:{type:'gacha'}, rarity:'UR', specials:['','aoe','multi2'],            desc:'Зелёный дрозд. Мафиози — в пиджаке, зек — уже с напарником.'},
- {key:'finmart',name:'Финмарт',       file:['Финмарт.png','Финмарт мафиози.png'], cost:70, hp:145, atk:58, range:180, rate:850, speed:40, unlock:{type:'gacha'}, rarity:'UR', specials:['','aoe',''],                 desc:'Длинноносый снайпер. В пиджаке стреляет точнее.'},
+ {key:'finmart',name:'Финмарт',       file:['Финмарт.png','Финмарт мафиози.png'], cost:70, hp:145, atk:58, range:130, rate:850, speed:40, unlock:{type:'gacha'}, rarity:'UR', specials:['','aoe',''],                 desc:'Длинноносый снайпер. В пиджаке стреляет точнее.'},
  {key:'jark',   name:'Jarkhnne',      file:['Jarkhnne.png','Jarkhnne усиленый.png','Jarkhnne кошмар.png'], cost:95, hp:250, atk:100, range:80, rate:1100, speed:44, unlock:{type:'gacha'}, rarity:'UR', specials:['','aoe','aoe'],               desc:'Серая овца. Усиленная. А «кошмар» — это когда овца усмехается.'},
  {key:'four',   name:'Четвёрка',      file:['4.png','4 гопник.png','4 сотона.png'], cost:95, hp:260, atk:105, range:65, rate:1000, speed:46, unlock:{type:'gacha'}, rarity:'UR', specials:['','aoe','multi3'],           desc:'Сначала просто четвёрка. Потом гопник. Потом — сотона. Лестница ясна.'},
  {key:'madly',  name:'Мэдли',         file:['Мэдли.png','Мэдли Немец.png','Мэдли жар птица.png'], cost:90, hp:170, atk:88, range:120, rate:1000, speed:42, unlock:{type:'gacha'}, rarity:'UR', specials:['','multi2','aoe'],           desc:'Не путать с Мэдли кэрротом! Это Мэдли. Немец — с характером, жар птица — в огне.'},
@@ -1289,6 +1289,7 @@ function renderArena(){
   });
 }
 function startPvp(i){
+  battleReset();
   const bot=ARENA_BOTS[i];
   const roster=battleRoster();
   if(!roster.length){ toast('Сначала поймай котов!'); return; }
@@ -1554,7 +1555,11 @@ function battleRoster(){
 // ================= BATTLE =================
 const B={active:false};
 let UID=1, lastFrame=0;
+function battleReset(){
+  Object.assign(B,{active:true,pvp:false,pvpBot:null,pvpQueue:[],pvpNext:0,pvpERoster:[],pvpEIdx:0,pvpENext:0,live:false,viewOnly:false,eFood:0,bossPhase:0,bossNext:0,bossLabel:'',units:[],parts:[],pops:[],t:0,speed:1,paused:false,over:false,kills:0,shake:0,flash:0});
+}
 function startBattle(id){
+  battleReset();
   const st=STAGES.find(s=>s.id===id);
   const roster0=battleRoster();
   const sel0=(S.selCat&&roster0.includes(S.selCat))?S.selCat:roster0[0];
@@ -1664,8 +1669,8 @@ function attackBase(u){
 }
 function update(dt){
   B.t+=dt;
-  B.food=Math.min(B.foodMax,B.food+dt*0.014);
-  if(B.live) B.eFood=Math.min(150,B.eFood+dt*0.014);
+  B.food=Math.min(B.foodMax,B.food+dt*0.002);
+  if(B.live) B.eFood=Math.min(150,B.eFood+dt*0.002);
   if(B.bombCd>0) B.bombCd=Math.max(0,B.bombCd-dt);
   const st=B.stage;
   if(B.pvp){
@@ -1679,7 +1684,7 @@ function update(dt){
       B.units.push(mkUnit(r[0],r[2],'e',{hp:es.hp,atk:es.atk,range:es.range,rate:es.rate,speed:es.speed,special:es.special,x:815,y:rnd(-25,25)}));
       B.pvpEIdx++; B.pvpENext=B.t+rnd(2000,3400);
     }
-    if(B.pvpEIdx>=B.pvpERoster.length&&!B.units.some(u=>u.team==='e'&&u.hp>0)&&!B.over){ B.enemyBase=0; }
+    if(B.pvpEIdx>0&&B.pvpEIdx>=B.pvpERoster.length&&!B.units.some(u=>u.team==='e'&&u.hp>0)&&!B.over){ B.enemyBase=0; }
   }
   if(!B.pvp&&B.t<st.spawnTime&&B.t>=B.nextSpawn){
     const cnt=B.units.filter(u=>u.team==='e'&&!u.boss).length;
@@ -1985,11 +1990,13 @@ cv.addEventListener('pointerdown',e=>{
   }
 });
 $('#btn-bomb').addEventListener('click',useBomb);
-$('#btn-speed').addEventListener('click',()=>{
+function toggleSpeed(){
+  if(B.pvp){ B.speed=1; $('#btn-speed').textContent='x1'; toast('Скорость ×2 — только в рейдах'); SFX.click(); return; }
   B.speed=B.speed===1?2:1;
   $('#btn-speed').textContent='x'+B.speed;
   SFX.click();
-});
+}
+$('#btn-speed').addEventListener('click',toggleSpeed);
 $('#btn-pause').addEventListener('click',()=>{
   if(!B.active||B.over) return;
   B.paused=true; $('#pause-overlay').classList.remove('hidden'); SFX.click();
@@ -2124,6 +2131,21 @@ function liveBomb(side){
   for(const u of B.units) if(u.team===side&&u.hp>0){ u.hp-=dmg; u.flash=160; addPop(u.x,u.y-72,'-'+dmg,'#b02020'); }
 }
 function lpFound(d){
+  if(B.active&&B.live){
+    LP.room=d.room; LP.done=false;
+    LP.opp={pid:d.opp.pid,name:d.opp.name,avatar:d.opp.avatar,rating:d.opp.rating};
+    LP.role=(d.host===NET.pid)?'host':'guest';
+    if(LP.role==='guest'){
+      B.viewOnly=true;
+      clearTimeout(LP.snapT);
+      LP.snapT=setTimeout(()=>{ if(LP.role==='guest'&&!B.over){ toast('Соперник не начал бой 😿'); endLiveGuest(false,false); } },40000);
+      toast('⚔ Соединение восстановлено!');
+    } else {
+      clearTimeout(LP.startT);
+      LP.startT=setTimeout(()=>{ lvStatus(''); toast('Соперник не прислал отряд 😿'); LP.room=null; LP.role=null; },30000);
+    }
+    return;
+  }
   if(B.active){ toast('Уже идёт бой'); return; }
   LP.room=d.room; LP.done=false;
   LP.opp={pid:d.opp.pid,name:d.opp.name,avatar:d.opp.avatar,rating:d.opp.rating};
@@ -2140,11 +2162,13 @@ function lpFound(d){
   }
 }
 function lpSquad(d){
+  if(B.active&&B.live){ if(!B.liveRoom||B.liveRoom===d.room){ LP.room=d.room; LP.role='host'; LP.done=false; } return; }
   if(LP.role!=='host'||!LP.room||d.room!==LP.room) return;
   clearTimeout(LP.startT);
   startLiveHost((d.roster||[]).filter(r=>r&&CATMAP[r[0]]));
 }
 function startLiveHost(eroster){
+  battleReset();
   if(!eroster.length) eroster=ARENA_BOTS[0].roster.slice();
   const roster=battleRoster();
   if(!roster.length){ toast('Сначала поймай котов!'); LP.room=null; LP.role=null; return; }
@@ -2157,7 +2181,7 @@ function startLiveHost(eroster){
     shake:0,flash:0,sel:roster[0],banner:{txt:'🎮 ЖИВОЙ БОЙ: ты vs '+(LP.opp?LP.opp.name:'?')},bannerLife:2500,
     pvp:true,pvpBot:{name:LP.opp?LP.opp.name:''},pvpQueue:roster.slice(),pvpNext:1200,
     pvpERoster:eroster,pvpEIdx:0,pvpENext:1500,
-    live:true
+    live:true,liveRoom:LP.room||''
   });
   B.eFood=150;
   show('battle'); buildCatBar(); updateSelCat(); topbar();
@@ -2181,6 +2205,7 @@ function lpSendSnap(){
   NET.send({t:'pvp_snap',room:LP.room,et:Math.round(B.t),u:us,pB:Math.round(B.playerBase),eB:Math.round(B.enemyBase),pF:Math.round(B.food),eF:Math.round(B.eFood||0),fl:B.flash>0?1:0});
 }
 function startLiveView(bannerTxt){
+  battleReset();
   Object.assign(B,{
     active:true,viewOnly:true,
     stage:{id:90,name:'АРЕНА: ЖИВОЙ БОЙ',bossName:LP.opp?LP.opp.name:'',foodCost:0,reward:{coins:0,gems:0},spawnTime:1e9,bossAt:1e9,interval:99999,emMul:1,diff:5,sky:['#2a1a4e','#8a5ae0']},
@@ -2195,7 +2220,7 @@ function startLiveView(bannerTxt){
   $('#pause-overlay').classList.add('hidden');
   $('#btn-speed').textContent='x1';
   clearTimeout(LP.snapT);
-  LP.snapT=setTimeout(()=>{ if(LP.role==='guest'&&!B.over){ toast('Соперник не начал бой 😿'); endLiveGuest(false,false); } },25000);
+  LP.snapT=setTimeout(()=>{ if(LP.role==='guest'&&!B.over){ toast('Соперник не начал бой 😿'); endLiveGuest(false,false); } },40000);
 }
 function lpSnap(d){
   if(LP.role!=='guest'||!LP.room||d.room!==LP.room) return;
