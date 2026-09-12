@@ -373,7 +373,7 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;}
         <h2>🎮 АРЕНА <small style="font-size:11px;font-weight:800">PvP • КОТЫ СЕРВЕРА</small></h2>
       </div>
       <div class="squad-info" id="arena-rating"></div>
-      <div class="squad-hint">Выбери соперника — бой на авто-развёртывании, но ты можешь докидывать своих тапом. Рейтинг: +25 / -15.</div>
+      <div class="squad-hint">Боты — автобой. В живом бою расставляй своих котов сам тапом по левой части поля (едят котлетки 🍖). Рейтинг: +25 / -15.</div>
       <div id="arena-list"></div>
       <div style="margin-top:16px;text-align:center">
         <button class="bbtn big-battle" id="lvsearch-btn" data-act="lvsearch" style="min-width:280px">🎮 НАЙТИ СОПЕРНИКА (ЖИВОЙ БОЙ)</button>
@@ -1550,15 +1550,15 @@ function update(dt){
   if(B.bombCd>0) B.bombCd=Math.max(0,B.bombCd-dt);
   const st=B.stage;
   if(B.pvp){
-    if(B.pvpQueue.length&&B.t>=B.pvpNext){
+    if(!B.live&&B.pvpQueue.length&&B.t>=B.pvpNext){
       const pk=B.pvpQueue[0], ps=catStats(pk);
       if(B.food>=ps.cost){ B.food-=ps.cost; B.units.push(mkUnit(pk,catRec(pk).form,'p',{hp:ps.hp,atk:ps.atk,x:125,y:rnd(-25,25)})); B.pvpQueue.shift(); SFX.spawn(); }
       B.pvpNext=B.t+rnd(1600,3000);
     }
-    if(B.pvpEIdx<B.pvpERoster.length&&B.t>=B.pvpENext){
+    if(!B.live&&B.pvpEIdx<B.pvpERoster.length&&B.t>=B.pvpENext){
       const r=B.pvpERoster[B.pvpEIdx], es=catStatsAt(r[0],r[1],r[2]);
-      if(B.live&&B.eFood<es.cost){ B.pvpENext=B.t+400; }
-      else { if(B.live)B.eFood-=es.cost; B.units.push(mkUnit(r[0],r[2],'e',{hp:es.hp,atk:es.atk,range:es.range,rate:es.rate,speed:es.speed,special:es.special,x:815,y:rnd(-25,25)})); B.pvpEIdx++; B.pvpENext=B.t+rnd(2000,3400); }
+      B.units.push(mkUnit(r[0],r[2],'e',{hp:es.hp,atk:es.atk,range:es.range,rate:es.rate,speed:es.speed,special:es.special,x:815,y:rnd(-25,25)}));
+      B.pvpEIdx++; B.pvpENext=B.t+rnd(2000,3400);
     }
     if(B.pvpEIdx>=B.pvpERoster.length&&!B.units.some(u=>u.team==='e'&&u.hp>0)&&!B.over){ B.enemyBase=0; }
   }
@@ -1843,11 +1843,11 @@ function frame(ts){
 // ================= BATTLE INPUT =================
 cv.addEventListener('pointerdown',e=>{
   if(!B.active||B.over||B.paused) return;
-  if(B.viewOnly){ if(B.sel&&LP.role==='guest') NET.send({t:'pvp_deploy',room:LP.room,k:B.sel}); return; }
   const r=cv.getBoundingClientRect();
   const x=(e.clientX-r.left)/r.width*900;
   const y=(e.clientY-r.top)/r.height*430;
   if(y<60) return;
+  if(B.viewOnly){ if(x<440&&B.sel&&LP.role==='guest'){ const stt=catStats(B.sel); if(B.food>=stt.cost) NET.send({t:'pvp_deploy',room:LP.room,k:B.sel}); else toast('Мало котлет 🍖!'); } return; }
   const st=catStats(B.sel);
   if(x<440){
     if(B.food>=st.cost){
@@ -1982,6 +1982,7 @@ const NET={
       case 'pvp_snap': lpSnap(d); break;
       case 'pvp_end': lpEnd(d); break;
       case 'pvp_bomb': if(LP.role==='host'&&B.active&&!B.over) liveBomb('p'); break;
+      case 'pvp_deploy': if(LP.role==='host'&&B.active&&B.live&&!B.over) liveDeployE(d.k); break;
       case 'invite_result': if(!d.ok) toast('⛔ '+(d.msg||'не удалось')); break;
     }
   }
@@ -2037,6 +2038,16 @@ function startLiveHost(eroster){
   $('#btn-speed').textContent='x1';
   clearInterval(LP.sendT);
   LP.sendT=setInterval(()=>{ if(B.active&&B.live&&!B.over&&LP.role==='host') lpSendSnap(); },100);
+}
+function liveDeployE(k){
+  if(!B.active||!B.live||B.over) return;
+  const r=(B.pvpERoster||[]).find(x=>x&&x[0]===k);
+  if(!r) return;
+  const es=catStatsAt(r[0],r[1],r[2]);
+  if(B.eFood<es.cost) return;
+  B.eFood-=es.cost;
+  B.units.push(mkUnit(r[0],r[2],'e',{hp:es.hp,atk:es.atk,range:es.range,rate:es.rate,speed:es.speed,special:es.special,x:815,y:rnd(-25,25)}));
+  SFX.spawn();
 }
 function lpSendSnap(){
   const us=B.units.map(u=>[u.id,u.team==='p'?0:1,u.key,u.form,Math.round(u.x),Math.round(u.y),Math.round(Math.max(0,u.hp)),u.maxhp,u.boss?1:0]);
