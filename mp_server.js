@@ -348,6 +348,7 @@ wss.on('connection', ws => {
       case 'pvp_snap':
       case 'pvp_deploy':
       case 'pvp_bomb':
+      case 'pvp_upg':
       case 'pvp_end': {
         const rm = rooms[String(d.room || '')];
         if (!rm) break;
