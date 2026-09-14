@@ -167,6 +167,11 @@ wss.on('connection', ws => {
   ws.player = null;
   const close = () => {
     if (!ws.player) return;
+    if (ws.voiceRoom) {
+      const rm = rooms[ws.voiceRoom];
+      if (rm) { const other = rm.a === ws ? rm.b : rm.a; if (other) to(other, { t: 'vo_state', m: 1 }); }
+      ws.voiceRoom = null;
+    }
     const p = ws.player;
     p.online = false;
     saveState();
@@ -192,7 +197,19 @@ wss.on('connection', ws => {
   ws.on('close', close);
   ws.on('error', close);
 
-  ws.on('message', raw => {
+  ws.on('message', (raw, isBinary) => {
+    if (isBinary) {
+      // voice: raw PCM16 16kHz mono -> other player of the same room, no logging
+      try {
+        if (raw.length > 8192) return;
+        const rm = rooms[ws.voiceRoom];
+        if (rm) {
+          const other = rm.a === ws ? rm.b : rm.a;
+          if (other && other.readyState === 1) other.send(raw);
+        }
+      } catch (e) {}
+      return;
+    }
     let d;
     try { d = JSON.parse(raw); } catch (e) { return; }
     switch (d.t) {
@@ -354,6 +371,30 @@ wss.on('connection', ws => {
         if (!rm) break;
         const other = rm.a === ws ? rm.b : rm.a;
         if (other && other.player) to(other, d);
+        break;
+      }
+      case 'vo_open': {
+        const r = String(d.room || '');
+        const rm = rooms[r];
+        if (rm && (rm.a === ws || rm.b === ws)) {
+          ws.voiceRoom = r;
+          const other = rm.a === ws ? rm.b : rm.a;
+          if (other) to(other, { t: 'vo_state', m: 0 });
+        }
+        break;
+      }
+      case 'vo_close': {
+        const r = ws.voiceRoom;
+        ws.voiceRoom = null;
+        if (r) {
+          const rm = rooms[r];
+          if (rm) { const other = rm.a === ws ? rm.b : rm.a; if (other) to(other, { t: 'vo_state', m: 1 }); }
+        }
+        break;
+      }
+      case 'vo_mute': {
+        const rm = rooms[ws.voiceRoom];
+        if (rm) { const other = rm.a === ws ? rm.b : rm.a; if (other) to(other, { t: 'vo_state', m: d.m ? 1 : 0 }); }
         break;
       }
     }
